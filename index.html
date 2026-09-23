@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>世界探訪スタンプ帳</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F3EAD8;
+    --panel:#FBF6EC;
+    --ink:#20293A;
+    --muted:#6E6250;
+    --ocean:#AAD3E8;
+    --land:#EFEDE1;
+    --land-line:#B7AF98;
+    --map-label:#5C6B60;
+    --grid:rgba(20,30,20,0.08);
+    --gold:#B9812E;
+    --gold-deep:#8A5C1E;
+    --gold-soft:#E9CB92;
+    --danger:#A9432F;
+    --line:#D8C9A6;
+    --shadow:rgba(40,32,16,0.18);
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme: dark){
+      --bg:#121722;
+      --panel:#1B2333;
+      --ink:#EDE6D6;
+      --muted:#9AA1B0;
+      --ocean:#12293D;
+      --land:#232B26;
+      --land-line:#48544C;
+      --map-label:#8FA398;
+      --grid:rgba(255,255,255,0.07);
+      --gold:#E0A94F;
+      --gold-deep:#F2C878;
+      --gold-soft:#3A2E1C;
+      --danger:#E0846F;
+      --line:#2C3546;
+      --shadow:rgba(0,0,0,0.45);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#121722;
+    --panel:#1B2333;
+    --ink:#EDE6D6;
+    --muted:#9AA1B0;
+    --ocean:#12293D;
+    --land:#232B26;
+    --land-line:#48544C;
+    --map-label:#8FA398;
+    --grid:rgba(255,255,255,0.07);
+    --gold:#E0A94F;
+    --gold-deep:#F2C878;
+    --gold-soft:#3A2E1C;
+    --danger:#E0846F;
+    --line:#2C3546;
+    --shadow:rgba(0,0,0,0.45);
+  }
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Zen Kaku Gothic New', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+    -webkit-tap-highlight-color:transparent;
+    overflow-x:hidden;
+  }
+  .app{max-width:760px;margin:0 auto;padding:0 16px 48px;}
+
+  header{
+    position:sticky;top:0;z-index:20;
+    padding:calc(14px + env(safe-area-inset-top,0px)) 16px 12px;
+    margin:0 -16px 14px;
+    background:linear-gradient(var(--bg) 78%, transparent);
+  }
+  .title-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
+  h1{
+    font-family:'Fraunces', Georgia, 'Times New Roman', serif;
+    font-weight:700;
+    font-size:26px;
+    letter-spacing:0.01em;
+    margin:0;
+    line-height:1.15;
+  }
+  .subtitle{font-size:12.5px;color:var(--muted);margin-top:4px;}
+  .theme-btn{
+    border:1px solid var(--line);background:var(--panel);color:var(--ink);
+    border-radius:999px;width:36px;height:36px;font-size:15px;flex:none;
+    cursor:pointer;
+  }
+
+  .progress-card{
+    margin-top:14px;background:var(--panel);border:1px solid var(--line);
+    border-radius:16px;padding:12px 14px;box-shadow:0 2px 10px var(--shadow);
+  }
+  .progress-top{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;}
+  .progress-count{font-family:'Fraunces',serif;font-weight:600;font-size:17px;color:var(--gold-deep);}
+  .progress-track{margin-top:8px;height:8px;border-radius:99px;background:var(--line);overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-deep));border-radius:99px;transition:width .5s ease;}
+
+  .toolbar{display:flex;gap:8px;margin-top:14px;align-items:center;}
+  .search{
+    flex:1;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+    border-radius:12px;padding:9px 12px;font-size:14px;font-family:inherit;
+  }
+  .search::placeholder{color:var(--muted);}
+  .drawer-btn{
+    flex:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+    border-radius:12px;padding:9px 12px;font-size:13px;font-family:inherit;cursor:pointer;
+  }
+
+  .filters{display:flex;gap:6px;overflow-x:auto;margin-top:10px;padding-bottom:4px;-ms-overflow-style:none;scrollbar-width:none;}
+  .filters::-webkit-scrollbar{display:none;}
+  .chip{
+    flex:none;border:1px solid var(--line);background:transparent;color:var(--muted);
+    border-radius:999px;padding:6px 13px;font-size:12.5px;cursor:pointer;font-family:inherit;
+    white-space:nowrap;
+  }
+  .chip.active{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+
+  .geo-card{
+    margin-top:10px;background:var(--panel);border:1px solid var(--line);
+    border-radius:14px;padding:10px 14px;display:flex;align-items:center;gap:12px;
+  }
+  .geo-text{flex:1;}
+  .geo-title{font-size:13.5px;font-weight:500;}
+  .geo-status{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .switch{
+    position:relative;flex:none;width:44px;height:26px;border-radius:99px;
+    background:var(--line);border:none;cursor:pointer;transition:background .2s ease;
+  }
+  .switch::after{
+    content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;
+    background:var(--panel);box-shadow:0 1px 3px var(--shadow);transition:transform .2s ease;
+  }
+  .switch.on{background:var(--gold);}
+  .switch.on::after{transform:translateX(18px);}
+
+  .map-wrap{
+    position:relative;margin-top:16px;border-radius:20px;overflow:hidden;
+    aspect-ratio:2/1;background:var(--ocean);border:1px solid var(--line);
+    box-shadow:0 4px 18px var(--shadow);
+  }
+  .map-wrap svg{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  .land{fill:var(--land);stroke:var(--land-line);stroke-width:1.4;stroke-linejoin:round;}
+  .grid-line{stroke:var(--grid);stroke-width:1;}
+  .continent-label{
+    font-family:'Zen Kaku Gothic New',sans-serif;font-size:13px;letter-spacing:.04em;
+    fill:var(--map-label);opacity:.75;pointer-events:none;
+  }
+
+  .pin{
+    position:absolute;transform:translate(-50%,-50%);
+    width:26px;height:26px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;cursor:pointer;border:none;padding:0;
+    background:var(--panel);border:1.5px solid var(--land-line);
+    box-shadow:0 1px 4px var(--shadow);
+    transition:transform .15s ease;
+    opacity:.72;
+  }
+  .pin:active{transform:translate(-50%,-50%) scale(0.9);}
+  .pin.collected{
+    background:radial-gradient(circle at 35% 30%, var(--gold-soft), var(--gold));
+    border-color:var(--gold-deep);opacity:1;
+    box-shadow:0 0 0 3px rgba(185,129,46,0.22), 0 1px 4px var(--shadow);
+  }
+  .pin.dim{opacity:.16;pointer-events:none;}
+
+  .empty-note{
+    text-align:center;font-size:12.5px;color:var(--muted);margin-top:10px;
+  }
+
+  /* detail sheet */
+  .overlay{
+    position:fixed;inset:0;background:rgba(20,16,8,0.4);opacity:0;pointer-events:none;
+    transition:opacity .2s ease;z-index:40;
+  }
+  .overlay.show{opacity:1;pointer-events:auto;}
+  .sheet{
+    position:fixed;left:0;right:0;bottom:0;z-index:41;
+    background:var(--panel);border-radius:20px 20px 0 0;
+    padding:18px 20px calc(22px + env(safe-area-inset-bottom,0px));
+    transform:translateY(110%);transition:transform .28s ease;
+    max-width:760px;margin:0 auto;box-shadow:0 -6px 24px var(--shadow);
+  }
+  .sheet.open{transform:translateY(0);}
+  .sheet-handle{width:36px;height:4px;background:var(--line);border-radius:99px;margin:0 auto 14px;}
+  .sheet-emoji{font-size:34px;}
+  .sheet-region{font-size:11.5px;color:var(--muted);margin-top:6px;}
+  .sheet h2{font-family:'Fraunces',serif;font-size:21px;margin:4px 0 2px;}
+  .sheet-country{font-size:13px;color:var(--muted);margin-bottom:10px;}
+  .sheet p.desc{font-size:14px;line-height:1.6;margin:0 0 18px;}
+  .sheet-actions{display:flex;gap:10px;}
+  .btn{
+    flex:1;border:none;border-radius:12px;padding:12px 14px;font-size:14.5px;
+    font-family:inherit;font-weight:500;cursor:pointer;
+  }
+  .btn-collect{background:var(--ink);color:var(--bg);}
+  .btn-collect.on{background:var(--gold);color:#2a1c07;}
+  .btn-close{background:transparent;border:1px solid var(--line);color:var(--ink);flex:none;padding:12px 18px;}
+
+  /* collection drawer */
+  .drawer{
+    position:fixed;top:0;right:0;bottom:0;width:min(360px,86vw);z-index:45;
+    background:var(--panel);box-shadow:-8px 0 24px var(--shadow);
+    transform:translateX(100%);transition:transform .25s ease;
+    padding:calc(18px + env(safe-area-inset-top,0px)) 18px 18px;overflow-y:auto;
+  }
+  .drawer.open{transform:translateX(0);}
+  .drawer-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .drawer-head h3{font-family:'Fraunces',serif;font-size:19px;margin:0;}
+  .icon-btn{border:none;background:transparent;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;}
+  .stamp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .stamp-cell{
+    aspect-ratio:1;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    font-size:18px;background:var(--bg);border:1px solid var(--line);opacity:.3;
+  }
+  .stamp-cell.on{opacity:1;background:radial-gradient(circle at 35% 30%, var(--gold-soft), var(--gold));border-color:var(--gold-deep);}
+  .drawer-empty{font-size:13px;color:var(--muted);margin-top:20px;line-height:1.7;}
+  .reset-btn{
+    margin-top:22px;width:100%;padding:11px;border-radius:12px;border:1px solid var(--danger);
+    background:transparent;color:var(--danger);font-size:13px;font-family:inherit;cursor:pointer;
+  }
+
+  /* confirm modal */
+  .confirm-box{
+    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:60;
+    background:var(--panel);border-radius:16px;padding:20px;width:min(300px,84vw);
+    box-shadow:0 10px 30px var(--shadow);display:none;
+  }
+  .confirm-box.show{display:block;}
+  .confirm-box p{font-size:13.5px;line-height:1.6;margin:0 0 16px;}
+  .confirm-row{display:flex;gap:8px;}
+
+  /* toast */
+  .toast{
+    position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translate(-50%,-140%);
+    z-index:70;background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:99px;
+    font-size:13px;transition:transform .35s cubic-bezier(.2,.8,.3,1);white-space:nowrap;
+    box-shadow:0 6px 18px var(--shadow);
+  }
+  .toast.show{transform:translate(-50%,0);}
+
+  footer{margin-top:26px;text-align:center;font-size:11.5px;color:var(--muted);line-height:1.7;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="title-row">
+      <div>
+        <h1>世界探訪スタンプ帳</h1>
+        <div class="subtitle">地図の中を旅して、名所のスタンプを集めよう</div>
+      </div>
+      <button class="theme-btn" id="themeBtn" aria-label="テーマ切替">🌓</button>
+    </div>
+
+    <div class="progress-card">
+      <div class="progress-top">
+        <span>集めたスタンプ</span>
+        <span class="progress-count"><span id="collectedCount">0</span> / <span id="totalCount">0</span></span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    </div>
+
+    <div class="toolbar">
+      <input class="search" id="searchInput" type="text" placeholder="名所や国名で検索…">
+      <button class="drawer-btn" id="openDrawer">📖 スタンプ帳</button>
+    </div>
+
+    <div class="geo-card">
+      <div class="geo-text">
+        <div class="geo-title">📍 自動チェックイン</div>
+        <div class="geo-status" id="geoStatus">オフ — 2km以内に近づくとチェックインを提案する</div>
+      </div>
+      <button class="switch" id="geoToggle" aria-label="自動チェックインの切替"></button>
+    </div>
+
+    <div class="filters" id="filters"></div>
+  </header>
+
+  <div class="map-wrap" id="mapWrap">
+    <svg viewBox="0 0 1000 500" preserveAspectRatio="none">
+      <g class="grid-line">
+        <line x1="83" y1="0" x2="83" y2="500"></line>
+        <line x1="167" y1="0" x2="167" y2="500"></line>
+        <line x1="250" y1="0" x2="250" y2="500"></line>
+        <line x1="333" y1="0" x2="333" y2="500"></line>
+        <line x1="417" y1="0" x2="417" y2="500"></line>
+        <line x1="500" y1="0" x2="500" y2="500"></line>
+        <line x1="583" y1="0" x2="583" y2="500"></line>
+        <line x1="667" y1="0" x2="667" y2="500"></line>
+        <line x1="750" y1="0" x2="750" y2="500"></line>
+        <line x1="833" y1="0" x2="833" y2="500"></line>
+        <line x1="917" y1="0" x2="917" y2="500"></line>
+        <line x1="0" y1="83" x2="1000" y2="83"></line>
+        <line x1="0" y1="167" x2="1000" y2="167"></line>
+        <line x1="0" y1="250" x2="1000" y2="250"></line>
+        <line x1="0" y1="333" x2="1000" y2="333"></line>
+        <line x1="0" y1="417" x2="1000" y2="417"></line>
+      </g>
+      <path class="land" d="M120,90 L160,74 L200,68 L236,76 L262,88 L286,106 L302,128 L318,144 L330,158 L326,180 L322,200 L302,218 L282,232 L262,226 L242,220 L220,232 L200,242 L182,226 L168,210 L152,196 L138,180 L122,166 L108,150 L96,134 L90,120 Z"></path>
+      <path class="land" d="M300,258 L318,250 L332,248 L346,258 L356,270 L363,290 L366,312 L358,336 L350,362 L340,384 L330,402 L318,410 L308,412 L296,396 L288,380 L282,360 L278,340 L275,320 L274,300 L286,280 Z"></path>
+      <path class="land" d="M472,90 L498,80 L520,74 L542,78 L562,86 L574,98 L582,112 L594,104 L604,96 L584,120 L562,142 L540,148 L520,150 L502,142 L488,132 L476,120 L468,110 Z"></path>
+      <path class="land" d="M450,160 L462,152 L472,148 L496,148 L520,150 L542,158 L560,172 L572,194 L582,222 L578,248 L572,272 L558,298 L542,322 L526,334 L512,342 L496,332 L480,322 L468,298 L460,272 L452,246 L448,222 L450,200 L452,182 Z"></path>
+      <path class="land" d="M580,80 L616,64 L650,58 L688,62 L722,68 L762,76 L802,88 L834,98 L862,110 L882,124 L900,140 L896,160 L890,180 L868,192 L850,200 L822,194 L800,190 L774,210 L750,232 L722,210 L700,192 L674,182 L650,172 L628,160 L610,150 L598,134 L590,120 Z"></path>
+      <path class="land" d="M830,300 L856,292 L880,288 L902,296 L922,310 L928,326 L932,342 L916,354 L900,362 L878,360 L860,356 L842,346 L830,336 L826,318 Z"></path>
+      <text class="continent-label" x="205" y="112" text-anchor="middle">北アメリカ</text>
+      <text class="continent-label" x="318" y="325" text-anchor="middle">南アメリカ</text>
+      <text class="continent-label" x="527" y="108" text-anchor="middle">ヨーロッパ</text>
+      <text class="continent-label" x="513" y="235" text-anchor="middle">アフリカ</text>
+      <text class="continent-label" x="742" y="132" text-anchor="middle">アジア</text>
+      <text class="continent-label" x="875" y="322" text-anchor="middle">オセアニア</text>
+    </svg>
+  </div>
+  <div class="empty-note" id="emptyNote" style="display:none;">この条件に合う名所は見つからなかった</div>
+
+  <footer>コレクションはこのブラウザに保存される。端末や他のブラウザとは共有されない。</footer>
+</div>
+
+<div class="overlay" id="overlay"></div>
+
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-emoji" id="sheetEmoji"></div>
+  <div class="sheet-region" id="sheetRegion"></div>
+  <h2 id="sheetName"></h2>
+  <div class="sheet-country" id="sheetCountry"></div>
+  <p class="desc" id="sheetDesc"></p>
+  <div class="sheet-actions">
+    <button class="btn btn-collect" id="collectBtn"></button>
+    <button class="btn btn-close" id="closeSheet">閉じる</button>
+  </div>
+</div>
+
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <h3>スタンプ帳</h3>
+    <button class="icon-btn" id="closeDrawer">✕</button>
+  </div>
+  <div class="stamp-grid" id="stampGrid"></div>
+  <div class="drawer-empty" id="drawerEmpty" style="display:none;">まだスタンプがない。地図上のピンをタップして、最初の名所を集めよう。</div>
+  <button class="reset-btn" id="resetBtn">コレクションをリセット</button>
+</div>
+
+<div class="confirm-box" id="confirmBox">
+  <p>集めたスタンプをすべて消去する。この操作は元に戻せない。</p>
+  <div class="confirm-row">
+    <button class="btn btn-close" id="confirmNo">キャンセル</button>
+    <button class="btn btn-collect" id="confirmYes" style="background:var(--danger);color:#fff;">消去する</button>
+  </div>
+</div>
+
+<div class="confirm-box" id="checkinBox">
+  <div class="sheet-emoji" id="checkinEmoji" style="text-align:center;"></div>
+  <p style="text-align:center;font-weight:500;font-size:15px;margin:8px 0 2px;" id="checkinName"></p>
+  <p style="text-align:center;">近くにいるみたい。チェックインする？</p>
+  <div class="confirm-row">
+    <button class="btn btn-close" id="checkinLater">あとで</button>
+    <button class="btn btn-collect" id="checkinYes">チェックインする</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const LANDMARKS = [
+  {id:'fuji',name:'富士山',country:'日本',region:'アジア',lat:35.3606,lng:138.7274,emoji:'🗻',desc:'信仰の対象として古くから崇められてきた、日本一の霊峰。'},
+  {id:'fushimi',name:'伏見稲荷大社',country:'日本',region:'アジア',lat:34.9671,lng:135.7727,emoji:'⛩️',desc:'山肌を彩る、朱色の千本鳥居が続くトンネル。'},
+  {id:'wall',name:'万里の長城',country:'中国',region:'アジア',lat:40.4319,lng:116.5704,emoji:'🧱',desc:'山々を縫うように延びる、人類最大級の建造物。'},
+  {id:'terracotta',name:'兵馬俑',country:'中国',region:'アジア',lat:34.3841,lng:109.2785,emoji:'🏺',desc:'始皇帝の陵墓を守る、等身大の陶器の軍団。'},
+  {id:'angkor',name:'アンコールワット',country:'カンボジア',region:'アジア',lat:13.4125,lng:103.8670,emoji:'🛕',desc:'ジャングルに眠る、クメール王朝の巨大寺院。'},
+  {id:'tajmahal',name:'タージ・マハル',country:'インド',region:'アジア',lat:27.1751,lng:78.0421,emoji:'🕌',desc:'亡き皇妃を偲んで建てられた、白亜の廟。'},
+  {id:'cappadocia',name:'カッパドキア',country:'トルコ',region:'アジア',lat:38.6431,lng:34.8289,emoji:'🎈',desc:'奇岩の谷を、朝焼けの熱気球が埋め尽くす。'},
+  {id:'burj',name:'ブルジュ・ハリファ',country:'アラブ首長国連邦',region:'アジア',lat:25.1972,lng:55.2744,emoji:'🏙️',desc:'雲を突き抜ける、世界一の高さを誇る塔。'},
+  {id:'bali',name:'ウルワツ寺院',country:'インドネシア',region:'アジア',lat:-8.4095,lng:115.1889,emoji:'🌴',desc:'断崖に建つ寺院と、棚田が広がるバリ島。'},
+  {id:'petra',name:'ペトラ遺跡',country:'ヨルダン',region:'アジア',lat:30.3285,lng:35.4444,emoji:'🏜️',desc:'岩壁を掘り抜いて造られた、バラ色の古代都市。'},
+  {id:'eiffel',name:'エッフェル塔',country:'フランス',region:'ヨーロッパ',lat:48.8584,lng:2.2945,emoji:'🗼',desc:'パリの空に描かれた、鉄骨の詩。'},
+  {id:'monsaint',name:'モン・サン・ミッシェル',country:'フランス',region:'ヨーロッパ',lat:48.6361,lng:-1.5115,emoji:'🏰',desc:'潮の満ち引きで姿を変える、孤島の修道院。'},
+  {id:'colosseum',name:'コロッセオ',country:'イタリア',region:'ヨーロッパ',lat:41.8902,lng:12.4922,emoji:'🏛️',desc:'剣闘士たちの熱狂を今に伝える、円形闘技場。'},
+  {id:'venice',name:'ヴェネツィア',country:'イタリア',region:'ヨーロッパ',lat:45.4408,lng:12.3155,emoji:'🚤',desc:'運河が街路の代わりを果たす、水上都市。'},
+  {id:'sagrada',name:'サグラダ・ファミリア',country:'スペイン',region:'ヨーロッパ',lat:41.4036,lng:2.1744,emoji:'⛪',desc:'140年以上未完成の、ガウディの傑作。'},
+  {id:'bigben',name:'ビッグベン',country:'イギリス',region:'ヨーロッパ',lat:51.5007,lng:-0.1246,emoji:'🕰️',desc:'テムズ川のほとりで、時を刻み続ける時計塔。'},
+  {id:'stonehenge',name:'ストーンヘンジ',country:'イギリス',region:'ヨーロッパ',lat:51.1789,lng:-1.8262,emoji:'🪨',desc:'誰が何のために並べたのか、今も謎めく巨石群。'},
+  {id:'santorini',name:'サントリーニ島',country:'ギリシャ',region:'ヨーロッパ',lat:36.3932,lng:25.4615,emoji:'🏝️',desc:'白壁と青い屋根が、断崖を彩るエーゲ海の島。'},
+  {id:'kremlin',name:'クレムリン',country:'ロシア',region:'ヨーロッパ',lat:55.7520,lng:37.6175,emoji:'🏯',desc:'玉ねぎ型の尖塔がそびえる、権力の中枢。'},
+  {id:'pyramid',name:'ギザの三大ピラミッド',country:'エジプト',region:'アフリカ',lat:29.9792,lng:31.1342,emoji:'🔺',desc:'4500年の時を超えて、砂漠に立つ王の墓。'},
+  {id:'victoria',name:'ヴィクトリアの滝',country:'ザンビア/ジンバブエ',region:'アフリカ',lat:-17.9243,lng:25.8572,emoji:'💦',desc:'「雷鳴のとどろく水煙」と呼ばれる大瀑布。'},
+  {id:'kilimanjaro',name:'キリマンジャロ山',country:'タンザニア',region:'アフリカ',lat:-3.0674,lng:37.3556,emoji:'⛰️',desc:'赤道直下にありながら、山頂に雪を戴く山。'},
+  {id:'sahara',name:'サハラ砂漠',country:'モロッコ',region:'アフリカ',lat:31.7917,lng:-7.0926,emoji:'🏜️',desc:'果てしなく続く砂丘が織りなす、静寂の海。'},
+  {id:'liberty',name:'自由の女神',country:'アメリカ',region:'北アメリカ',lat:40.6892,lng:-74.0445,emoji:'🗽',desc:'新たな地を目指した人々を迎えた、灯の女神。'},
+  {id:'grandcanyon',name:'グランドキャニオン',country:'アメリカ',region:'北アメリカ',lat:36.1069,lng:-112.1129,emoji:'🏜️',desc:'大地が2000mの深さまで刻んだ、時の断層。'},
+  {id:'niagara',name:'ナイアガラの滝',country:'アメリカ/カナダ',region:'北アメリカ',lat:43.0962,lng:-79.0377,emoji:'🌊',desc:'轟音とともに落ちる、北米屈指の大瀑布。'},
+  {id:'goldengate',name:'ゴールデンゲートブリッジ',country:'アメリカ',region:'北アメリカ',lat:37.8199,lng:-122.4783,emoji:'🌉',desc:'霧の中に浮かび上がる、朱色の吊り橋。'},
+  {id:'rockies',name:'カナディアンロッキー',country:'カナダ',region:'北アメリカ',lat:51.4968,lng:-115.9281,emoji:'🏔️',desc:'エメラルド色の湖を抱く、氷河の山脈。'},
+  {id:'machu',name:'マチュピチュ',country:'ペルー',region:'南アメリカ',lat:-13.1631,lng:-72.5450,emoji:'🦙',desc:'雲の上に隠されていた、インカ帝国の空中都市。'},
+  {id:'nazca',name:'ナスカの地上絵',country:'ペルー',region:'南アメリカ',lat:-14.7390,lng:-75.1300,emoji:'✏️',desc:'上空からしか全貌が見えない、砂漠の巨大な絵。'},
+  {id:'iguazu',name:'イグアスの滝',country:'アルゼンチン/ブラジル',region:'南アメリカ',lat:-25.6953,lng:-54.4367,emoji:'💧',desc:'275の滝が連なる、「悪魔の喉笛」。'},
+  {id:'moai',name:'モアイ像',country:'チリ(イースター島)',region:'南アメリカ',lat:-27.1212,lng:-109.3667,emoji:'🗿',desc:'太平洋の孤島で、海を見つめ続ける巨石像群。'},
+  {id:'sydney',name:'シドニー・オペラハウス',country:'オーストラリア',region:'オセアニア',lat:-33.8568,lng:151.2153,emoji:'🎭',desc:'帆のような屋根が輝く、シドニーの象徴。'},
+  {id:'uluru',name:'ウルル(エアーズロック)',country:'オーストラリア',region:'オセアニア',lat:-25.3444,lng:131.0369,emoji:'🪨',desc:'荒野に浮かび上がる、巨大な一枚岩。'},
+];
+
+const REGIONS = ['全部','アジア','ヨーロッパ','アフリカ','北アメリカ','南アメリカ','オセアニア'];
+const STORE_KEY = 'worldStampBook.collected.v1';
+const MILESTONE_KEY = 'worldStampBook.milestones.v1';
+
+let collected = new Set();
+let shownMilestones = new Set();
+let storageOK = true;
+let activeRegion = '全部';
+let searchTerm = '';
+let currentLandmark = null;
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw) collected = new Set(JSON.parse(raw));
+    const ms = localStorage.getItem(MILESTONE_KEY);
+    if(ms) shownMilestones = new Set(JSON.parse(ms));
+  }catch(e){ storageOK = false; }
+}
+function saveState(){
+  try{
+    localStorage.setItem(STORE_KEY, JSON.stringify([...collected]));
+    localStorage.setItem(MILESTONE_KEY, JSON.stringify([...shownMilestones]));
+  }catch(e){ storageOK = false; }
+}
+
+function toXY(lat,lng){
+  return { x:(lng+180)/360*100, y:(90-lat)/180*100 };
+}
+
+const mapWrap = document.getElementById('mapWrap');
+const filtersEl = document.getElementById('filters');
+
+function renderFilters(){
+  filtersEl.innerHTML = '';
+  REGIONS.forEach(r=>{
+    const b = document.createElement('button');
+    b.className = 'chip' + (r===activeRegion ? ' active' : '');
+    b.textContent = r;
+    b.onclick = ()=>{ activeRegion = r; renderFilters(); renderMarkers(); };
+    filtersEl.appendChild(b);
+  });
+}
+
+function matches(lm){
+  const regionOK = activeRegion==='全部' || lm.region===activeRegion;
+  const term = searchTerm.trim();
+  const searchOK = !term || (lm.name+lm.country).toLowerCase().includes(term.toLowerCase());
+  return regionOK && searchOK;
+}
+
+function renderMarkers(){
+  mapWrap.querySelectorAll('.pin').forEach(p=>p.remove());
+  let visible = 0;
+  LANDMARKS.forEach(lm=>{
+    const pos = toXY(lm.lat, lm.lng);
+    const btn = document.createElement('button');
+    btn.className = 'pin' + (collected.has(lm.id) ? ' collected' : '') + (matches(lm) ? '' : ' dim');
+    btn.style.left = pos.x + '%';
+    btn.style.top = pos.y + '%';
+    btn.textContent = lm.emoji;
+    btn.setAttribute('aria-label', lm.name);
+    btn.onclick = ()=> openSheet(lm);
+    mapWrap.appendChild(btn);
+    if(matches(lm)) visible++;
+  });
+  document.getElementById('emptyNote').style.display = visible===0 ? 'block' : 'none';
+}
+
+function renderProgress(){
+  document.getElementById('collectedCount').textContent = collected.size;
+  document.getElementById('totalCount').textContent = LANDMARKS.length;
+  const pct = Math.round(collected.size / LANDMARKS.length * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function renderDrawer(){
+  const grid = document.getElementById('stampGrid');
+  grid.innerHTML = '';
+  LANDMARKS.forEach(lm=>{
+    const cell = document.createElement('div');
+    cell.className = 'stamp-cell' + (collected.has(lm.id) ? ' on' : '');
+    cell.textContent = collected.has(lm.id) ? lm.emoji : '?';
+    cell.title = collected.has(lm.id) ? lm.name : '未収集';
+    grid.appendChild(cell);
+  });
+  document.getElementById('drawerEmpty').style.display = collected.size===0 ? 'block' : 'none';
+}
+
+// sheet
+const overlay = document.getElementById('overlay');
+const sheet = document.getElementById('sheet');
+function openSheet(lm){
+  currentLandmark = lm;
+  document.getElementById('sheetEmoji').textContent = lm.emoji;
+  document.getElementById('sheetRegion').textContent = lm.region;
+  document.getElementById('sheetName').textContent = lm.name;
+  document.getElementById('sheetCountry').textContent = lm.country;
+  document.getElementById('sheetDesc').textContent = lm.desc;
+  updateCollectBtn();
+  overlay.classList.add('show');
+  sheet.classList.add('open');
+}
+function closeSheet(){
+  overlay.classList.remove('show');
+  sheet.classList.remove('open');
+  currentLandmark = null;
+}
+function updateCollectBtn(){
+  const btn = document.getElementById('collectBtn');
+  if(!currentLandmark) return;
+  const on = collected.has(currentLandmark.id);
+  btn.textContent = on ? '✓ スタンプ帳に収集済み' : 'スタンプ帳に加える';
+  btn.classList.toggle('on', on);
+}
+document.getElementById('closeSheet').onclick = closeSheet;
+overlay.onclick = ()=>{ closeSheet(); closeDrawerFn(); };
+
+function toggleCollect(lm){
+  if(collected.has(lm.id)){
+    collected.delete(lm.id);
+  }else{
+    collected.add(lm.id);
+    checkMilestone();
+  }
+  saveState();
+  renderMarkers();
+  renderProgress();
+  renderDrawer();
+}
+
+// proximity check-in prompt
+const checkinBox = document.getElementById('checkinBox');
+let checkinTarget = null;
+function openCheckin(lm){
+  if(checkinBox.classList.contains('show')) return;
+  checkinTarget = lm;
+  document.getElementById('checkinEmoji').textContent = lm.emoji;
+  document.getElementById('checkinName').textContent = lm.name;
+  checkinBox.classList.add('show');
+}
+document.getElementById('checkinLater').onclick = ()=>{
+  checkinBox.classList.remove('show');
+  checkinTarget = null;
+};
+document.getElementById('checkinYes').onclick = ()=>{
+  if(checkinTarget && !collected.has(checkinTarget.id)){
+    collected.add(checkinTarget.id);
+    checkMilestone();
+    saveState();
+    renderMarkers();
+    renderProgress();
+    renderDrawer();
+    showToast(`🎉 ${checkinTarget.name} にチェックインした！`);
+  }
+  checkinBox.classList.remove('show');
+  checkinTarget = null;
+};
+
+document.getElementById('collectBtn').onclick = ()=>{
+  if(!currentLandmark) return;
+  toggleCollect(currentLandmark);
+  updateCollectBtn();
+};
+
+// milestones
+function checkMilestone(){
+  const pct = Math.round(collected.size / LANDMARKS.length * 100);
+  const targets = [25,50,75,100];
+  targets.forEach(t=>{
+    if(pct>=t && !shownMilestones.has(t)){
+      shownMilestones.add(t);
+      const msg = t===100 ? '🎉 全ての名所を集めた。世界を制覇した！' : `✨ 収集率 ${t}% を達成した`;
+      showToast(msg);
+    }
+  });
+}
+let toastTimer=null;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove('show'), 2600);
+}
+
+// drawer
+const drawer = document.getElementById('drawer');
+function openDrawerFn(){
+  renderDrawer();
+  overlay.classList.add('show');
+  drawer.classList.add('open');
+}
+function closeDrawerFn(){
+  drawer.classList.remove('open');
+  if(!sheet.classList.contains('open')) overlay.classList.remove('show');
+}
+document.getElementById('openDrawer').onclick = openDrawerFn;
+document.getElementById('closeDrawer').onclick = closeDrawerFn;
+
+// reset confirm
+const confirmBox = document.getElementById('confirmBox');
+document.getElementById('resetBtn').onclick = ()=> confirmBox.classList.add('show');
+document.getElementById('confirmNo').onclick = ()=> confirmBox.classList.remove('show');
+document.getElementById('confirmYes').onclick = ()=>{
+  collected = new Set();
+  shownMilestones = new Set();
+  saveState();
+  renderMarkers();
+  renderProgress();
+  renderDrawer();
+  confirmBox.classList.remove('show');
+};
+
+// search
+document.getElementById('searchInput').addEventListener('input', (e)=>{
+  searchTerm = e.target.value;
+  renderMarkers();
+});
+
+// geolocation auto check-in
+const GEO_RADIUS_KM = 2;
+const GEO_PREF_KEY = 'worldStampBook.geoEnabled.v1';
+let geoWatchId = null;
+const promptedThisSession = new Set();
+const geoToggle = document.getElementById('geoToggle');
+const geoStatus = document.getElementById('geoStatus');
+
+function haversineKm(lat1,lng1,lat2,lng2){
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLng = (lng2-lng1) * Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function setGeoStatus(text){ geoStatus.textContent = text; }
+
+function checkNearbyLandmarks(pos){
+  const { latitude, longitude } = pos.coords;
+  let nearestName = null, nearestKm = Infinity;
+  LANDMARKS.forEach(lm=>{
+    const d = haversineKm(latitude, longitude, lm.lat, lm.lng);
+    if(d < nearestKm){ nearestKm = d; nearestName = lm.name; }
+    if(d <= GEO_RADIUS_KM && !collected.has(lm.id) && !promptedThisSession.has(lm.id)){
+      promptedThisSession.add(lm.id);
+      openCheckin(lm);
+    }
+  });
+  if(geoToggle.classList.contains('on')){
+    setGeoStatus(`オン — 現在地から最も近い名所は${nearestName}（約${nearestKm.toFixed(1)}km）`);
+  }
+}
+
+function startGeo(){
+  if(!('geolocation' in navigator)){
+    setGeoStatus('この環境では位置情報が使えない');
+    geoToggle.classList.remove('on');
+    return;
+  }
+  setGeoStatus('位置情報を取得中…');
+  geoWatchId = navigator.geolocation.watchPosition(
+    checkNearbyLandmarks,
+    (err)=>{
+      if(err.code === 1){ setGeoStatus('位置情報の利用が許可されなかった'); }
+      else if(err.code === 3){ setGeoStatus('位置情報の取得がタイムアウトした。もう一度試してほしい'); }
+      else{ setGeoStatus('位置情報を取得できなかった'); }
+      geoToggle.classList.remove('on');
+      try{ localStorage.setItem(GEO_PREF_KEY, 'off'); }catch(e){}
+    },
+    { enableHighAccuracy:true, maximumAge:15000, timeout:20000 }
+  );
+}
+function stopGeo(){
+  if(geoWatchId!==null && 'geolocation' in navigator){
+    navigator.geolocation.clearWatch(geoWatchId);
+    geoWatchId = null;
+  }
+  setGeoStatus('オフ — 2km以内に近づくとチェックインを提案する');
+}
+
+geoToggle.onclick = ()=>{
+  const turningOn = !geoToggle.classList.contains('on');
+  geoToggle.classList.toggle('on', turningOn);
+  try{ localStorage.setItem(GEO_PREF_KEY, turningOn ? 'on' : 'off'); }catch(e){}
+  if(turningOn) startGeo(); else stopGeo();
+};
+
+try{
+  if(localStorage.getItem(GEO_PREF_KEY) === 'on'){
+    geoToggle.classList.add('on');
+    startGeo();
+  }
+}catch(e){}
+
+// theme
+const themeBtn = document.getElementById('themeBtn');
+themeBtn.onclick = ()=>{
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur==='dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try{ localStorage.setItem('worldStampBook.theme', next); }catch(e){}
+};
+try{
+  const savedTheme = localStorage.getItem('worldStampBook.theme');
+  if(savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+}catch(e){}
+
+// init
+loadState();
+renderFilters();
+renderMarkers();
+renderProgress();
+if(!storageOK){
+  showToast('この端末では保存機能が使えないため、収集は今回のみ有効');
+}
+</script>
+</body>
+</html>
