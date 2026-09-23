@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
   :root{
     --bg:#F3EAD8;
@@ -147,16 +149,15 @@
 
   .map-wrap{
     position:relative;margin-top:16px;border-radius:20px;overflow:hidden;
-    aspect-ratio:2/1;background:var(--ocean);border:1px solid var(--line);
+    height:480px;background:var(--ocean);border:1px solid var(--line);
     box-shadow:0 4px 18px var(--shadow);
   }
-  .map-wrap svg{position:absolute;inset:0;width:100%;height:100%;display:block;}
-  .land{fill:var(--land);stroke:var(--land-line);stroke-width:1.4;stroke-linejoin:round;}
-  .grid-line{stroke:var(--grid);stroke-width:1;}
-  .continent-label{
-    font-family:'Zen Kaku Gothic New',sans-serif;font-size:13px;letter-spacing:.04em;
-    fill:var(--map-label);opacity:.75;pointer-events:none;
-  }
+  .map-wrap #map{width:100%;height:100%;z-index:10;}
+  .leaflet-container{background:var(--ocean);font-family:inherit;}
+  .leaflet-control-attribution{display:none;}
+  .landmark-popup{font-family:inherit;text-align:center;}
+  .landmark-popup h3{margin:6px 0;font-size:15px;}
+  .landmark-popup p{margin:2px 0;font-size:12px;color:#666;}
 
   .pin{
     position:absolute;transform:translate(-50%,-50%);
@@ -290,39 +291,8 @@
     <div class="filters" id="filters"></div>
   </header>
 
-  <div class="map-wrap" id="mapWrap">
-    <svg viewBox="0 0 1000 500" preserveAspectRatio="none">
-      <g class="grid-line">
-        <line x1="83" y1="0" x2="83" y2="500"></line>
-        <line x1="167" y1="0" x2="167" y2="500"></line>
-        <line x1="250" y1="0" x2="250" y2="500"></line>
-        <line x1="333" y1="0" x2="333" y2="500"></line>
-        <line x1="417" y1="0" x2="417" y2="500"></line>
-        <line x1="500" y1="0" x2="500" y2="500"></line>
-        <line x1="583" y1="0" x2="583" y2="500"></line>
-        <line x1="667" y1="0" x2="667" y2="500"></line>
-        <line x1="750" y1="0" x2="750" y2="500"></line>
-        <line x1="833" y1="0" x2="833" y2="500"></line>
-        <line x1="917" y1="0" x2="917" y2="500"></line>
-        <line x1="0" y1="83" x2="1000" y2="83"></line>
-        <line x1="0" y1="167" x2="1000" y2="167"></line>
-        <line x1="0" y1="250" x2="1000" y2="250"></line>
-        <line x1="0" y1="333" x2="1000" y2="333"></line>
-        <line x1="0" y1="417" x2="1000" y2="417"></line>
-      </g>
-      <path class="land" d="M120,90 L160,74 L200,68 L236,76 L262,88 L286,106 L302,128 L318,144 L330,158 L326,180 L322,200 L302,218 L282,232 L262,226 L242,220 L220,232 L200,242 L182,226 L168,210 L152,196 L138,180 L122,166 L108,150 L96,134 L90,120 Z"></path>
-      <path class="land" d="M300,258 L318,250 L332,248 L346,258 L356,270 L363,290 L366,312 L358,336 L350,362 L340,384 L330,402 L318,410 L308,412 L296,396 L288,380 L282,360 L278,340 L275,320 L274,300 L286,280 Z"></path>
-      <path class="land" d="M472,90 L498,80 L520,74 L542,78 L562,86 L574,98 L582,112 L594,104 L604,96 L584,120 L562,142 L540,148 L520,150 L502,142 L488,132 L476,120 L468,110 Z"></path>
-      <path class="land" d="M450,160 L462,152 L472,148 L496,148 L520,150 L542,158 L560,172 L572,194 L582,222 L578,248 L572,272 L558,298 L542,322 L526,334 L512,342 L496,332 L480,322 L468,298 L460,272 L452,246 L448,222 L450,200 L452,182 Z"></path>
-      <path class="land" d="M580,80 L616,64 L650,58 L688,62 L722,68 L762,76 L802,88 L834,98 L862,110 L882,124 L900,140 L896,160 L890,180 L868,192 L850,200 L822,194 L800,190 L774,210 L750,232 L722,210 L700,192 L674,182 L650,172 L628,160 L610,150 L598,134 L590,120 Z"></path>
-      <path class="land" d="M830,300 L856,292 L880,288 L902,296 L922,310 L928,326 L932,342 L916,354 L900,362 L878,360 L860,356 L842,346 L830,336 L826,318 Z"></path>
-      <text class="continent-label" x="205" y="112" text-anchor="middle">北アメリカ</text>
-      <text class="continent-label" x="318" y="325" text-anchor="middle">南アメリカ</text>
-      <text class="continent-label" x="527" y="108" text-anchor="middle">ヨーロッパ</text>
-      <text class="continent-label" x="513" y="235" text-anchor="middle">アフリカ</text>
-      <text class="continent-label" x="742" y="132" text-anchor="middle">アジア</text>
-      <text class="continent-label" x="875" y="322" text-anchor="middle">オセアニア</text>
-    </svg>
+  <div class="map-wrap">
+    <div id="map"></div>
   </div>
   <div class="empty-note" id="emptyNote" style="display:none;">この条件に合う名所は見つからなかった</div>
 
@@ -438,11 +408,20 @@ function saveState(){
   }catch(e){ storageOK = false; }
 }
 
-function toXY(lat,lng){
-  return { x:(lng+180)/360*100, y:(90-lat)/180*100 };
+// Leaflet map setup
+let map = null;
+let markers = {};
+
+function initMap(){
+  map = L.map('map').setView([20, 0], 2);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    minZoom:2,
+    maxZoom:13,
+    attribution:''
+  }).addTo(map);
+  renderMarkers();
 }
 
-const mapWrap = document.getElementById('mapWrap');
 const filtersEl = document.getElementById('filters');
 
 function renderFilters(){
@@ -464,20 +443,34 @@ function matches(lm){
 }
 
 function renderMarkers(){
-  mapWrap.querySelectorAll('.pin').forEach(p=>p.remove());
-  let visible = 0;
-  LANDMARKS.forEach(lm=>{
-    const pos = toXY(lm.lat, lm.lng);
-    const btn = document.createElement('button');
-    btn.className = 'pin' + (collected.has(lm.id) ? ' collected' : '') + (matches(lm) ? '' : ' dim');
-    btn.style.left = pos.x + '%';
-    btn.style.top = pos.y + '%';
-    btn.textContent = lm.emoji;
-    btn.setAttribute('aria-label', lm.name);
-    btn.onclick = ()=> openSheet(lm);
-    mapWrap.appendChild(btn);
-    if(matches(lm)) visible++;
+  if(!map) return;
+  Object.keys(markers).forEach(id=>{
+    map.removeLayer(markers[id]);
   });
+  markers = {};
+  let visible = 0;
+  
+  LANDMARKS.forEach(lm=>{
+    const isCollected = collected.has(lm.id);
+    const isVisible = matches(lm);
+    
+    const markerColor = isCollected ? '#B9812E' : '#6B7280';
+    const html = `<div style="font-size:18px;text-align:center;width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:${markerColor};border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);cursor:pointer;">${lm.emoji}</div>`;
+    
+    const marker = L.marker([lm.lat, lm.lng], {
+      icon: L.divIcon({
+        html: html,
+        iconSize: [36, 36],
+        className: isVisible ? '' : 'hidden-marker'
+      })
+    }).addTo(map);
+    
+    marker.on('click', ()=> openSheet(lm));
+    markers[lm.id] = marker;
+    
+    if(isVisible) visible++;
+  });
+  
   document.getElementById('emptyNote').style.display = visible===0 ? 'block' : 'none';
 }
 
@@ -723,8 +716,10 @@ try{
 // init
 loadState();
 renderFilters();
-renderMarkers();
 renderProgress();
+setTimeout(()=>{
+  initMap();
+}, 100);
 if(!storageOK){
   showToast('この端末では保存機能が使えないため、収集は今回のみ有効');
 }
